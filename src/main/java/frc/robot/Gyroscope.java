@@ -2,10 +2,13 @@ package frc.robot;
 
 /* Imports */
 
-public class Gyroscope {
-    /*
-    * Create a new instance of the BNO055 class using euler vectors to read data.
-    * This instance of the class will output vector directions in degrees for a range of all real numbers.
+/**
+ * Wrapper class for a BNO055 gyroscope typically used on the robot.
+ */
+public class Gyroscope implements RobotWrapper {
+    /**
+    * An instance of the BNO055 class that uses euler vectors to read data.
+    * This instance outputs vector directions in degrees for a range of all real numbers.
     */
     public static BNO055 imu = BNO055.getInstance(BNO055.opmode_t.OPERATION_MODE_IMUPLUS, BNO055.vector_type_t.VECTOR_EULER);
 
@@ -14,6 +17,16 @@ public class Gyroscope {
      * This value is reset to the current imu heading value whenever the reset method is run.
      */
 	private double angleOffset;
+	
+	/**
+	 * The current heading value of the gyroscope in relation to the angle offset.
+	 */
+	private double currentHeading;
+	
+	/**
+	 * The current raw heading value of the gyroscope.
+	 */
+	private double currentRawHeading;
 
 	/**
 	 * Constructs a new Gyroscope object.
@@ -24,12 +37,38 @@ public class Gyroscope {
 	}
 
 	/**
-	 * Returns the heading in relation to the offset.
-	 * @return
+	 * Initialization process for a gyroscope object before enabling the robot.
+	 * @param mode for which the gyroscope is being initialized.
+	 */
+	public void init(RunMode mode)
+	{
+		reset();	// The init function for all modes simply resets the gyroscope
+	}
+
+	/**
+	 * Iterative program for a gyroscope object while the robot is enabled.
+	 * @param mode for which the program is being run.
+	 */
+	public void update(RunMode mode)
+	{
+		updateRawHeading();	// The update function for all modes simply updates both heading values so they are ready to be fetched
+		updateHeading();
+	}
+
+	/**
+	 * @return the current heading in relation to the offset
 	 */
 	public double getHeading()
 	{
-		return normalizeHeadingVal(getRawHeading() - angleOffset);
+		return currentHeading;
+	}
+
+	/**
+	 * Update the current heading of the gyroscope in relation to the offset.
+	 */
+	public void updateHeading()
+	{
+		currentHeading = normalizeHeadingVal(getRawHeading() - angleOffset);
 	}
 
 	/**
@@ -37,14 +76,24 @@ public class Gyroscope {
 	 */
 	public void reset()
 	{
-		// Set angleOffset to the raw heading of the gyro.
-		angleOffset = getRawHeading();
+		updateRawHeading();
 
-		// Check if the angle offset is 360 degrees.
-        if (angleOffset == 360.0)
+		angleOffset = getRawHeading();	// Set angleOffset to the raw heading of the gyro.
+
+        if (angleOffset == 360.0)	// Check if the angle offset is 360 degrees.
         {
 			angleOffset = 0;    // If so, set angleOffset to 0. This accounts for a problem  previously seen on the field.
 		}
+
+		updateHeading();
+	}
+
+	/**
+	 * Updates the current raw heading of the gyroscope.
+	 */
+	public void updateRawHeading()
+	{
+		currentRawHeading = normalizeHeadingVal(imu.getVector()[0]);
 	}
 
 	/**
@@ -53,7 +102,7 @@ public class Gyroscope {
 	 */
 	public double getRawHeading()
 	{
-		return normalizeHeadingVal(imu.getVector()[0]);
+		return currentRawHeading;
 	}
 	
 	/**
