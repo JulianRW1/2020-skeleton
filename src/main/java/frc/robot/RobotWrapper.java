@@ -11,7 +11,8 @@ public interface RobotWrapper {
      * A set of enums used to define what mode the robot is in.
      * Used in conjunction with the init and update methods.
     */
-    enum RunMode {
+    enum RunMode
+    {
         Auto, Teleop, Test
     }
 
